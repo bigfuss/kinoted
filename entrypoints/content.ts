@@ -1,7 +1,6 @@
 export default defineContentScript({
   matches: ["*://x.com/*"],
   main() {
-    const parsedTweets = new Set<string>();
     // Observe the document body for the timeline element
     const observer = new MutationObserver(() => {
       const timeline = document.querySelector('main[role="main"]');
@@ -18,17 +17,7 @@ export default defineContentScript({
                 );
                 if (tweetElement) {
                   const newTweet = parseTweet(tweetElement);
-                  if (newTweet && !parsedTweets.has(newTweet.tweetId)) {
-                    parsedTweets.add(newTweet.tweetId);
-
-                    console.log("New tweet detected:", newTweet);
-
-                    // Send tweet to background script
-                    browser.runtime.sendMessage({
-                      action: "addTweet",
-                      newTweet,
-                    });
-                  }
+                  scoreTweet(newTweet)
                 }
               }
             });
@@ -155,5 +144,31 @@ function parseTweet(tweetElement: Element) {
     isAd,
   };
 
+  console.log("New tweet detected:", tweet);
+
+  // Send tweet to background script
+  browser.runtime.sendMessage({ action: "addTweet", tweet });
   return tweet;
+}
+
+async function scoreTweet(tweet) {
+  const defaults = chrome.aiOriginTrial.languageModel.capabilities();
+  console.log('Model default:', defaults);
+  // Need to get user preferences from the local extension storage
+  //userPrefs = getUserPrefs()
+
+  // Need to call the AI module to score this tweet given prefs
+  //tweetScore = chromeAIPrompt("Figure this out!")
+
+  // Check if score is equal or higher to threshold 
+  // if tweetScore >= userPrefs.userSensitivity {
+  //   runTweetActions(tweet)
+  // }
+  // const session = await chrome.aiOriginTrial.languageModel.create({
+  //   monitor(m) {
+  //     m.addEventListener("downloadprogress", (e) => {
+  //       console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+  //     });
+  //   },
+  // });
 }
